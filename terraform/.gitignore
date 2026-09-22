@@ -85,3 +85,5 @@ Thumbs.db
 *.tmp
 *.temp
 *~
+
+.terraform.lock.hcl
