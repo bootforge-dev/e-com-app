@@ -53,8 +53,8 @@ resource "aws_security_group" "this" {
 
   ingress {
     description = "Api-Gateway"
-    from_port   = 9000
-    to_port     = 9000
+    from_port   = 9100
+    to_port     = 9100
     protocol    = "tcp"
     cidr_blocks = var.allowed_cidr_block
   }

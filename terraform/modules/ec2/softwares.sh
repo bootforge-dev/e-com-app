@@ -26,6 +26,7 @@ apt-get update -y
 # Do NOT run full apt upgrade during cloud-init
 # apt-get upgrade -y
 
+
 # =========================================================
 # BASIC PACKAGES
 # =========================================================
@@ -42,6 +43,7 @@ apt-get install -y \
     lsb-release \
     fontconfig \
     apt-transport-https
+
 
 # =========================================================
 # JAVA 25
@@ -60,6 +62,7 @@ echo "===== Java location ====="
 
 readlink -f "$(which java)"
 
+
 # =========================================================
 # JAVA 25 ENVIRONMENT
 # =========================================================
@@ -69,7 +72,7 @@ JAVA_HOME="/usr/lib/jvm/java-25-openjdk-amd64"
 if [ -d "$JAVA_HOME" ]; then
 
     echo "JAVA_HOME found: $JAVA_HOME"
-    # Set system-wide JAVA_HOME
+
     cat > /etc/profile.d/java.sh <<EOF
 export JAVA_HOME=$JAVA_HOME
 export PATH=\$JAVA_HOME/bin:\$PATH
@@ -82,6 +85,7 @@ else
     echo "ERROR: Java 25 JAVA_HOME not found"
     exit 1
 fi
+
 
 # =========================================================
 # JENKINS
@@ -101,6 +105,7 @@ apt-get update -y
 
 apt-get install -y jenkins
 
+
 # =========================================================
 # JENKINS JAVA 25 CONFIGURATION
 # =========================================================
@@ -115,18 +120,16 @@ Environment="JAVA_HOME=$JAVA_HOME"
 Environment="PATH=$JAVA_HOME/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 EOF
 
-# Reload systemd
 systemctl daemon-reload
 
-# Enable Jenkins
 systemctl enable jenkins
 
-# Restart Jenkins
 systemctl restart jenkins
 
 echo "===== Jenkins status ====="
 
 systemctl --no-pager status jenkins || true
+
 
 # =========================================================
 # AWS CLI
@@ -150,20 +153,100 @@ echo "===== AWS CLI version ====="
 
 aws --version
 
+
 # =========================================================
 # DOCKER
+# OFFICIAL DOCKER APT REPOSITORY
 # =========================================================
 
-echo "===== Installing Docker ====="
+echo "===== Installing latest Docker Engine ====="
 
-apt-get install -y docker.io
+# ---------------------------------------------------------
+# Remove conflicting Ubuntu Docker packages
+# ---------------------------------------------------------
+
+apt-get remove -y \
+    docker.io \
+    docker-doc \
+    docker-compose \
+    docker-compose-v2 \
+    docker-buildx \
+    podman-docker \
+    containerd \
+    runc \
+    || true
+
+
+# ---------------------------------------------------------
+# Add Docker official GPG key
+# ---------------------------------------------------------
+
+install -m 0755 -d /etc/apt/keyrings
+
+curl -fsSL \
+    https://download.docker.com/linux/ubuntu/gpg \
+    -o /etc/apt/keyrings/docker.asc
+
+chmod a+r /etc/apt/keyrings/docker.asc
+
+
+# ---------------------------------------------------------
+# Add Docker official repository
+# ---------------------------------------------------------
+
+cat > /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+
+# ---------------------------------------------------------
+# Update apt
+# ---------------------------------------------------------
+
+apt-get update -y
+
+
+# ---------------------------------------------------------
+# Install latest Docker Engine + Compose
+# ---------------------------------------------------------
+
+apt-get install -y \
+    docker-ce \
+    docker-ce-cli \
+    containerd.io \
+    docker-buildx-plugin \
+    docker-compose-plugin
+
+
+# ---------------------------------------------------------
+# Enable Docker
+# ---------------------------------------------------------
 
 systemctl enable docker
 systemctl start docker
 
+
+# =========================================================
+# DOCKER VERSION
+# =========================================================
+
 echo "===== Docker version ====="
 
 docker --version
+
+echo "===== Docker Compose version ====="
+
+docker compose version
+
+echo "===== Docker Buildx version ====="
+
+docker buildx version
+
 
 # =========================================================
 # ADD USERS TO DOCKER GROUP
@@ -171,28 +254,36 @@ docker --version
 
 echo "===== Adding users to docker group ====="
 
+# Jenkins user
 usermod -aG docker jenkins
+
+# Ubuntu user
 usermod -aG docker ubuntu
 
-# Restart Docker
-
-systemctl restart docker
-sudo chmod 666 /var/run/docker.sock
-
-sudo usermod -aG docker $USER
-newgrp docker
 
 # =========================================================
-# VERIFY DOCKER
+# DO NOT USE chmod 666 /var/run/docker.sock
+# =========================================================
+
+echo "===== Docker socket permissions ====="
+
+ls -l /var/run/docker.sock
+
+
+# =========================================================
+# RESTART DOCKER
+# =========================================================
+
+systemctl restart docker
+
+
+# =========================================================
+# DOCKER STATUS
 # =========================================================
 
 echo "===== Docker status ====="
 
 systemctl --no-pager status docker || true
-
-echo "===== Docker socket ====="
-
-ls -l /var/run/docker.sock
 
 
 # =========================================================
@@ -203,7 +294,8 @@ echo "===== Installing kubectl ====="
 
 KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 
-curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+curl -LO \
+    "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
 
 chmod +x kubectl
 
@@ -220,7 +312,8 @@ kubectl version --client
 
 echo "===== Installing Helm ====="
 
-curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+curl -fsSL \
+    https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 echo "===== Helm version ====="
 
@@ -238,7 +331,8 @@ PLATFORM="$(uname -s)_${ARCH}"
 
 cd /tmp
 
-curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_${PLATFORM}.tar.gz"
+curl -sLO \
+    "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_${PLATFORM}.tar.gz"
 
 tar -xzf "eksctl_${PLATFORM}.tar.gz"
 
@@ -248,6 +342,7 @@ echo "===== eksctl version ====="
 
 eksctl version
 
+
 # =========================================================
 # FINAL VERIFICATION
 # =========================================================
@@ -256,31 +351,46 @@ echo "================================================="
 echo "INSTALLATION VERIFICATION"
 echo "================================================="
 
-echo "Tree:"
+echo "===== Tree ====="
 tree --version || true
 
-echo "Java:"
+echo "===== Java ====="
 java --version || true
 
-echo "Javac:"
+echo "===== Javac ====="
 javac --version || true
 
-echo "Jenkins:"
+echo "===== JAVA_HOME ====="
+echo "$JAVA_HOME"
+
+echo "===== Jenkins ====="
 systemctl is-active jenkins || true
 
-echo "AWS CLI:"
+echo "===== AWS CLI ====="
 aws --version || true
 
-echo "Docker:"
+echo "===== Docker ====="
 docker --version || true
 
-echo "kubectl:"
+echo "===== Docker Compose ====="
+docker compose version || true
+
+echo "===== Docker Buildx ====="
+docker buildx version || true
+
+echo "===== Docker info ====="
+docker info || true
+
+echo "===== Docker socket ====="
+ls -l /var/run/docker.sock
+
+echo "===== kubectl ====="
 kubectl version --client || true
 
-echo "Helm:"
+echo "===== Helm ====="
 helm version || true
 
-echo "eksctl:"
+echo "===== eksctl ====="
 eksctl version || true
 
 echo "================================================="

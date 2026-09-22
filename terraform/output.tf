@@ -14,12 +14,12 @@ output "public_route_table_id" {
   value = module.public_route_table.route_table_id
 }
 
-output "securirty_group_id" {
-  value = module.secuirty_group.security_group_id
+output "security_group_id" {
+  value = module.security_group.security_group_id
 }
 
 output "security_group_name" {
-  value = module.secuirty_group.security_group_name
+  value = module.security_group.security_group_name
 }
 
 output "ec2_instance_id" {
@@ -46,18 +46,18 @@ output "ecr_repository_arn" {
   value = module.ecr.repository_arn
 }
 
-output "eks_cluster_name" {
-  value = module.eks_cluster.cluster_name
-}
-
-output "eks_cluster_endpoint" {
-  value = module.eks_cluster.cluster_endpoint
-}
-
-output "eks_cluster_arn" {
-  value = module.eks_cluster.cluster_arn
-}
-
-output "eks_node_group_name" {
-  value = module.eks_node_group.node_group_name
-}
+# output "eks_cluster_name" {
+#   value = module.eks_cluster.cluster_name
+# }
+#
+# output "eks_cluster_endpoint" {
+#   value = module.eks_cluster.cluster_endpoint
+# }
+#
+# output "eks_cluster_arn" {
+#   value = module.eks_cluster.cluster_arn
+# }
+#
+# output "eks_node_group_name" {
+#   value = module.eks_node_group.node_group_name
+# }
