@@ -156,54 +156,6 @@ EOF
 
 chmod 644 /etc/profile.d/java.sh
 
-
-# =========================================================
-# MAVEN
-# =========================================================
-
-echo "================================================="
-echo "INSTALLING APACHE MAVEN"
-echo "================================================="
-
-apt-get update -y
-
-apt-get install -y maven
-
-
-# =========================================================
-# MAVEN ENVIRONMENT
-# =========================================================
-
-MAVEN_HOME=$(dirname "$(dirname "$(readlink -f "$(which mvn)")")")
-
-export MAVEN_HOME
-export PATH="$MAVEN_HOME/bin:$PATH"
-
-echo "MAVEN_HOME=$MAVEN_HOME"
-
-
-cat > /etc/profile.d/maven.sh <<EOF
-export MAVEN_HOME=$MAVEN_HOME
-export PATH=\$MAVEN_HOME/bin:\$PATH
-EOF
-
-chmod 644 /etc/profile.d/maven.sh
-
-
-# =========================================================
-# VERIFY MAVEN
-# =========================================================
-
-echo "===== Maven version ====="
-
-mvn -version
-
-if ! command -v mvn >/dev/null 2>&1; then
-    echo "ERROR: Maven installation failed."
-    exit 1
-fi
-
-
 # =========================================================
 # JENKINS
 # =========================================================
@@ -434,13 +386,25 @@ echo "================================================="
 echo "CONFIGURING DOCKER GROUP"
 echo "================================================="
 
-if id ubuntu >/dev/null 2>&1; then
-    usermod -aG docker ubuntu
-fi
+usermod -aG docker ubuntu
+usermod -aG docker jenkins
 
-if id jenkins >/dev/null 2>&1; then
-    usermod -aG docker jenkins
-fi
+echo "===== Docker group ====="
+
+getent group docker
+
+echo "===== Restarting Docker ====="
+
+systemctl enable docker
+systemctl restart docker
+
+echo "===== Restarting Jenkins ====="
+
+systemctl restart jenkins
+
+echo "===== Docker socket ====="
+
+ls -l /var/run/docker.sock
 
 
 # =========================================================
@@ -448,31 +412,29 @@ fi
 # =========================================================
 
 echo "===== Docker version ====="
-
 docker --version
 
 echo "===== Docker Compose version ====="
-
 docker compose version
 
 echo "===== Docker Buildx version ====="
-
 docker buildx version
 
+echo "===== Docker service ====="
 
 if ! systemctl is-active --quiet docker; then
     echo "ERROR: Docker service is not running."
+    systemctl status docker --no-pager || true
     exit 1
 fi
 
-
-# =========================================================
-# DOCKER SOCKET
-# =========================================================
+echo "Docker service is running."
 
 echo "===== Docker socket ====="
-
 ls -l /var/run/docker.sock
+
+echo "===== Docker group ====="
+getent group docker
 
 
 # =========================================================
@@ -604,71 +566,7 @@ echo "================================================="
 git --version
 
 
-# =========================================================
-# CREATE APPLICATION DIRECTORY
-# =========================================================
 
-echo "================================================="
-echo "CREATING APPLICATION DIRECTORY"
-echo "================================================="
-
-mkdir -p "$APP_DIR"
-
-chown ubuntu:ubuntu "$APP_DIR"
-
-chmod 755 "$APP_DIR"
-
-
-# =========================================================
-# CLONE E-COM APP
-# =========================================================
-
-echo "================================================="
-echo "CLONING E-COM APP"
-echo "================================================="
-
-echo "Repository:"
-echo "$REPO_URL"
-
-echo "Destination:"
-echo "$APP_DIR"
-
-
-if [ -d "$APP_DIR/.git" ]; then
-
-    echo "Repository already exists."
-
-    cd "$APP_DIR"
-
-    git pull
-
-else
-
-    rm -rf "$APP_DIR"
-
-    git clone "$REPO_URL" "$APP_DIR"
-
-fi
-
-
-# =========================================================
-# SET REPOSITORY OWNERSHIP
-# =========================================================
-
-chown -R ubuntu:ubuntu "$APP_DIR"
-
-
-# =========================================================
-# VERIFY GIT REPOSITORY
-# =========================================================
-
-echo "===== Git repository ====="
-
-cd "$APP_DIR"
-
-git remote -v
-
-git status
 
 
 # =========================================================
@@ -904,7 +802,6 @@ echo "Date: $(date)"
 echo ""
 echo "Installed software:"
 echo "  Java 25"
-echo "  Maven ${MAVEN_VERSION}"
 echo "  Git"
 echo "  Jenkins"
 echo "  AWS CLI V2"
@@ -917,13 +814,6 @@ echo "  eksctl"
 echo "  jq"
 echo "  tree"
 
-echo ""
-echo "Application repository:"
-echo "  $REPO_URL"
-
-echo ""
-echo "Application directory:"
-echo "  $APP_DIR"
 
 echo ""
 echo "IMPORTANT:"
@@ -947,9 +837,6 @@ echo "    kubectl version --client"
 echo "    helm version"
 echo "    eksctl version"
 echo "    docker ps"
-echo ""
-echo "Application:"
-echo "    cd $APP_DIR"
 echo "    git status"
 echo ""
 echo "================================================="
