@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Name of the project"
   type        = string
-  default     = "dev-environment"
+  default     = "e-com-app-env"
 }
 
 variable "vpc_cidr" {
@@ -61,7 +61,7 @@ variable "ami_id" {
 variable "eks_cluster_name" {
   description = "EKS Cluster name"
   type        = string
-  default     = "dev-eks-cluster"
+  default     = "ecom-eks-cluster"
 }
 
 variable "eks_cluster_version" {

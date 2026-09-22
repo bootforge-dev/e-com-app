@@ -37,3 +37,11 @@ module "ec2" {
   security_group_id = module.security_group.security_group_id
   key_name          = var.key_name
 }
+
+module "ecr" {
+  source               = "./modules/ecr"
+  repository_name      = "e-comm-app"
+  image_tag_mutability = "MUTABLE"
+  scan_on_push         = true
+  encryption_type      = "AES256"
+}
