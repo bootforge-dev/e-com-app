@@ -5,7 +5,9 @@ resource "aws_instance" "this" {
   vpc_security_group_ids      = [var.security_group_id]
   associate_public_ip_address = true
   key_name                    = var.key_name
-  user_data                   = file("${path.module}/softwares.sh")
+  user_data_base64 = base64gzip(
+    file("${path.module}/softwares.sh")
+  )
 
   root_block_device {
     volume_size = 25
