@@ -50,7 +50,7 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponse updateProduct(Long id, CreateProductRequest request) {
+    public ProductResponse updateProduct(Long id, CreateProductRequest request, ProductStatus status) {
         Product product = getProduct(id);
 
         if(productRepository.existsBySkuAndIdNot(request.sku(), id)){
@@ -65,6 +65,7 @@ public class ProductService {
         product.setPrice(request.price());
         product.setCategory(request.category());
         product.setBrand(request.brand());
+        product.setStatus(status);
 
         Product updatedProduct = productRepository.save(product);
         return toProductResponse(updatedProduct);
