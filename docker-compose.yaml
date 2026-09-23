@@ -38,6 +38,25 @@ services:
       mysql:
         condition: service_healthy
 
+  inventory-service:
+    image: inventory-service:1.0
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    ports:
+      - "9002:9002"
+    networks:
+      - e_com
+    depends_on:
+      mysql:
+        condition: service_healthy
+
 volumes:
   mysql_data:
 networks:
