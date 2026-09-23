@@ -14,10 +14,35 @@ spring:
               uri: lb://product-service
               predicates:
                 - Path=/api/v1/products/**
+
             - id: inventory-service
               uri: lb://inventory-service
               predicates:
                 - Path=/api/v1/inventories/**
+
+            - id: product-service-openapi
+              uri: lb://product-service
+              predicates:
+                - Path=/product-service/v3/api-docs
+              filters:
+                - RewritePath=/product-service/v3/api-docs, /v3/api-docs
+
+            - id: inventory-service-openapi
+              uri: lb://inventory-service
+              predicates:
+                - Path=/inventory-service/v3/api-docs
+              filters:
+                - RewritePath=/inventory-service/v3/api-docs, /v3/api-docs
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: Product Service
+        url: /product-service/v3/api-docs
+
+      - name: Inventory Service
+        url: /inventory-service/v3/api-docs
 
 eureka:
   client:
@@ -32,7 +57,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, metrics, health
+        include: metrics, health
   endpoint:
     health:
       show-details: always

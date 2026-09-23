@@ -35,3 +35,6 @@ management:
   endpoint:
     health:
       show-details: always
+
+app:
+  api-gateway-url: ${API_GATEWAY_URL:http://localhost:9100}
