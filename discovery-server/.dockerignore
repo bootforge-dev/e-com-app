@@ -1,0 +1,33 @@
+# Maven
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Git
+.git/
+.gitignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Documentation
+HELP.md
+README.md
+
+# Test files
+src/test/
+
+# Temporary files
+*.tmp
+*.temp
