@@ -19,6 +19,41 @@ services:
       retries: 10
       start_period: 10s
 
+  discovery-server:
+    image: discovery-server:1.0
+    build:
+      context: ./discovery-server
+      dockerfile: Dockerfile
+    container_name: discovery-server
+    environment:
+      EUREKA_SERVER: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - e_com
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api-gateway:
+    image: api-gateway:1.0
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    environment:
+      EUREKA_SERVER: discovery-server
+    ports:
+      - "9100:9100"
+    networks:
+      - e_com
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
   product-service:
     image: product-service:1.0
     build:
@@ -30,6 +65,7 @@ services:
       DB_PORT: 3306
       DB_USERNAME: root
       DB_PASSWORD: root
+      EUREKA_SERVER: discovery-server
     ports:
       - "9001:9001"
     networks:
@@ -37,6 +73,9 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
 
   inventory-service:
     image: inventory-service:1.0
@@ -49,12 +88,15 @@ services:
       DB_PORT: 3306
       DB_USERNAME: root
       DB_PASSWORD: root
+      EUREKA_SERVER: discovery-server
     ports:
       - "9002:9002"
     networks:
       - e_com
     depends_on:
       mysql:
+        condition: service_healthy
+      discovery-server:
         condition: service_healthy
 
 volumes:
