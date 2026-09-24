@@ -87,6 +87,7 @@ services:
       DB_PASSWORD: root
       EUREKA_SERVER: discovery-server
       CONFIG_SERVER_URL: http://config-server:8888
+      API_GATEWAY_URL: ${API_GATEWAY_URL}
     ports:
       - "9001:9001"
     networks:
@@ -113,6 +114,7 @@ services:
       DB_PASSWORD: root
       EUREKA_SERVER: discovery-server
       CONFIG_SERVER_URL: http://config-server:8888
+      API_GATEWAY_URL: ${API_GATEWAY_URL}
     ports:
       - "9002:9002"
     networks:
