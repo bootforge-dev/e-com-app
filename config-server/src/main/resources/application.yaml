@@ -1,0 +1,17 @@
+server:
+  port: 8888
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/bootforge-dev/config-repo
+          default-label: main
+          clone-on-start: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
