@@ -6,7 +6,11 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "inventories")
+@Table(name = "inventories",
+uniqueConstraints = @UniqueConstraint(
+        name = "uk_inventory_product",
+        columnNames = "product_id"
+))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class Inventory {
@@ -14,14 +18,15 @@ public class Inventory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true,name = "product_id")
+    @Column(nullable = false, name = "product_id")
     private Long productId;
 
     @Column(nullable = false)
     private Integer quantity;
 
     @Column(nullable = false)
-    private Integer reservedQuantity;
+    @Builder.Default
+    private Integer reservedQuantity =0;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

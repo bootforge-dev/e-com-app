@@ -127,7 +127,6 @@ public class ProductService {
                 .category(product.getCategory())
                 .brand(product.getBrand())
                 .status(product.getStatus())
-                .createdAt(product.getCreatedAt())
                 .build();
     }
 

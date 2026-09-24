@@ -2,10 +2,13 @@ package com.bootforge.inventory.service;
 
 import com.bootforge.inventory.dto.*;
 import com.bootforge.inventory.entity.Inventory;
+import com.bootforge.inventory.entity.InventoryReservation;
+import com.bootforge.inventory.entity.ReservationStatus;
 import com.bootforge.inventory.exception.DuplicateInventoryException;
 import com.bootforge.inventory.exception.InsufficientInventoryException;
 import com.bootforge.inventory.exception.ProductNotFoundException;
 import com.bootforge.inventory.repository.InventoryRepository;
+import com.bootforge.inventory.repository.InventoryReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +22,7 @@ import java.util.List;
 public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
+    private final InventoryReservationRepository reservationRepository;
 
     @Transactional
     public InventoryResponse createInventory(CreateInventoryRequest request) {
@@ -61,9 +65,16 @@ public class InventoryService {
     }
 
     @Transactional
-    public InventoryResponse reserveStock(Long productId, Integer quantity) {
+    public InventoryResponse reserveStock(Long productId, Integer quantity, Long orderId) {
         //get inventory by productId
         Inventory inventory = getInventoryByProduct(productId);
+
+        reservationRepository.findByOrderIdAndProductIdAndStatus(orderId, productId, ReservationStatus.RESERVED)
+                .ifPresent(reservation -> {
+                    throw new IllegalStateException("Inventory already reserved for orderId: "
+                            + orderId + ", productId: " + productId
+                    );
+                });
 
         //check available quantity
         int availableQuantity = inventory.getQuantity() - inventory.getReservedQuantity();
@@ -71,46 +82,73 @@ public class InventoryService {
         //check requested quantity is available or not
         if (availableQuantity < quantity) {
             throw new InsufficientInventoryException(
-                    "Insufficient stock for productId: " + productId
-                            + ". Available: " + availableQuantity
+                    "Insufficient stock for productId: " + productId + ". Available: " + availableQuantity
                             + ", Requested: " + quantity
             );
         }
         //update reserve quantity
         inventory.setReservedQuantity(inventory.getReservedQuantity() + quantity);
+
+        InventoryReservation reservation = InventoryReservation.builder()
+                .orderId(orderId)
+                .productId(productId)
+                .quantity(quantity)
+                .status(ReservationStatus.RESERVED)
+                .build();
+
+        reservationRepository.save(reservation);
+
         return toInventoryResponse(inventory);
     }
 
     @Transactional
-    public InventoryResponse releaseStock(Long productId, Integer quantity) {
+    public InventoryResponse releaseStock(Long productId, Integer quantity, Long orderId) {
         //get inventory by productId
         Inventory inventory = getInventoryByProduct(productId);
 
-        if (inventory.getReservedQuantity() < quantity) {
+        InventoryReservation reservation = getReservation(orderId, productId);
+
+        if (reservation.getQuantity() < quantity) {
             throw new IllegalArgumentException(
-                    "Cannot release more stock than reserved for productId: "
-                            + productId
-            );
+                    "Cannot release more stock than reserved "
+                            + "for orderId: " + orderId);
         }
+
         inventory.setReservedQuantity(inventory.getReservedQuantity() - quantity);
+
+        if (reservation.getQuantity().equals(quantity)) {
+            reservation.setStatus(ReservationStatus.RELEASED);
+
+        } else {
+            reservation.setQuantity(reservation.getQuantity() - quantity);
+        }
+
         return toInventoryResponse(inventory);
     }
 
     @Transactional
-    public InventoryResponse confirmStock(Long productId, Integer quantity) {
+    public InventoryResponse confirmStock(Long productId, Integer quantity, Long orderId) {
         //get inventory by productId
         Inventory inventory = getInventoryByProduct(productId);
 
-        if (inventory.getReservedQuantity() < quantity) {
+        InventoryReservation reservation = getReservation(orderId, productId);
+
+        if (reservation.getQuantity() < quantity) {
             throw new IllegalArgumentException(
-                    "Cannot confirm more stock than reserved for productId: "
-                            + productId
-            );
+                    "Cannot release more stock than reserved "
+                            + "for orderId: " + orderId);
         }
 
         inventory.setReservedQuantity(inventory.getReservedQuantity() - quantity);
 
         inventory.setQuantity(inventory.getQuantity() - quantity);
+
+        if (reservation.getQuantity().equals(quantity)) {
+            reservation.setStatus(ReservationStatus.CONFIRMED);
+        } else {
+            reservation.setQuantity(reservation.getQuantity() - quantity);
+        }
+
         return toInventoryResponse(inventory);
     }
 
@@ -145,4 +183,23 @@ public class InventoryService {
                 .availableQuantity(availableQuantity)
                 .build();
     }
+
+    private InventoryReservation getReservation(
+            Long orderId,
+            Long productId) {
+
+        return reservationRepository
+                .findByOrderIdAndProductIdAndStatus(
+                        orderId,
+                        productId,
+                        ReservationStatus.RESERVED
+                )
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "No active reservation found for " + "orderId: " + orderId
+                                        + ", productId: " + productId
+                        )
+                );
+    }
+
 }

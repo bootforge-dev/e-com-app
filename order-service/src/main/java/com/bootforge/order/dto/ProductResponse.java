@@ -1,10 +1,8 @@
-package com.bootforge.productservice.dto;
+package com.bootforge.order.dto;
 
-import com.bootforge.productservice.entity.ProductStatus;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Builder
 public record ProductResponse(
@@ -15,6 +13,6 @@ public record ProductResponse(
         BigDecimal price,
         String category,
         String brand,
-        ProductStatus status
+        String status
 ) {
 }

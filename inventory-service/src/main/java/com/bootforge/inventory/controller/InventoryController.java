@@ -67,9 +67,13 @@ public class InventoryController {
 
             @RequestParam
             @Positive(message = "Quantity must be positive")
-            Integer quantity
+            Integer quantity,
+
+            @RequestParam
+            @Positive(message = "Order ID must be positive")
+            Long orderId
     ){
-        return ResponseEntity.ok(inventoryService.reserveStock(productId, quantity));
+        return ResponseEntity.ok(inventoryService.reserveStock(productId, quantity, orderId));
     }
 
     @Operation(summary = "Release stock")
@@ -80,9 +84,13 @@ public class InventoryController {
 
             @RequestParam
             @Positive(message = "Quantity must be positive")
-            Integer quantity
+            Integer quantity,
+
+            @RequestParam
+            @Positive(message = "Order ID must be positive")
+            Long orderId
     ){
-        return ResponseEntity.ok(inventoryService.releaseStock(productId, quantity));
+        return ResponseEntity.ok(inventoryService.releaseStock(productId, quantity, orderId));
     }
 
     @Operation(summary = "Confirm stock")
@@ -93,9 +101,13 @@ public class InventoryController {
 
             @RequestParam
             @Positive(message = "Quantity must be positive")
-            Integer quantity
+            Integer quantity,
+
+            @RequestParam
+            @Positive(message = "Order ID must be positive")
+            Long orderId
     ){
-        return ResponseEntity.ok(inventoryService.confirmStock(productId, quantity));
+        return ResponseEntity.ok(inventoryService.confirmStock(productId, quantity, orderId));
     }
 
     @GetMapping
