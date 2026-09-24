@@ -1,6 +1,7 @@
 package com.bootforge.productservice.service;
 
 import com.bootforge.productservice.dto.CreateProductRequest;
+import com.bootforge.productservice.dto.PageResponse;
 import com.bootforge.productservice.dto.ProductResponse;
 import com.bootforge.productservice.entity.Product;
 import com.bootforge.productservice.entity.ProductStatus;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -44,9 +47,18 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getAllProducts(Pageable pageable) {
-        return productRepository.findAll(pageable)
-                .map(this::toProductResponse);
+    public PageResponse<ProductResponse> getAllProducts(Pageable pageable) {
+        Page<Product> productPage = productRepository.findAll(pageable);
+        List<ProductResponse> products = productPage.getContent().stream()
+                .map(this::toProductResponse).toList();
+        return new PageResponse<>(
+                products,
+                productPage.getNumber(),
+                productPage.getSize(),
+                productPage.getTotalElements(),
+                productPage.getTotalPages()
+        );
+
     }
 
     @Transactional
@@ -79,9 +91,19 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> searchByProductName(String name, Pageable pageable) {
-        return productRepository.findByNameContainingIgnoreCaseAndStatus(name,ProductStatus.ACTIVE,pageable)
-                .map(this::toProductResponse);
+    public PageResponse<ProductResponse> searchByProductName(String name, Pageable pageable) {
+        Page<Product> productPage = productRepository.findByNameContainingIgnoreCaseAndStatus(name, ProductStatus.ACTIVE, pageable);
+        List<ProductResponse> products = productPage.getContent()
+                .stream()
+                .map(this::toProductResponse)
+                .toList();
+        return new PageResponse<>(
+                products,
+                productPage.getNumber(),
+                productPage.getSize(),
+                productPage.getTotalElements(),
+                productPage.getTotalPages()
+        );
     }
 
     @Transactional(readOnly = true)

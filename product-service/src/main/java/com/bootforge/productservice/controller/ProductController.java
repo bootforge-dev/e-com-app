@@ -1,6 +1,7 @@
 package com.bootforge.productservice.controller;
 
 import com.bootforge.productservice.dto.CreateProductRequest;
+import com.bootforge.productservice.dto.PageResponse;
 import com.bootforge.productservice.dto.ProductResponse;
 import com.bootforge.productservice.entity.ProductStatus;
 import com.bootforge.productservice.service.ProductService;
@@ -16,8 +17,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/products")
@@ -42,7 +41,7 @@ public class ProductController {
 
     @GetMapping
     @Operation(summary = "Fetch All products by pagination")
-    public ResponseEntity<Page<ProductResponse>> getAllProducts(
+    public ResponseEntity<PageResponse<ProductResponse>> getAllProducts(
             @ParameterObject
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC)
             Pageable pageable) {
@@ -69,7 +68,7 @@ public class ProductController {
 
     @GetMapping("/search")
     @Operation(summary = "Search product by Name")
-    public ResponseEntity<Page<ProductResponse>> searchByProductName(
+    public ResponseEntity<PageResponse<ProductResponse>> searchByProductName(
             @RequestParam String name,
             @ParameterObject
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC)

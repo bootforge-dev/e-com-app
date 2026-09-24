@@ -1,9 +1,6 @@
 package com.bootforge.inventory.controller;
 
-import com.bootforge.inventory.dto.CreateInventoryRequest;
-import com.bootforge.inventory.dto.InventoryAvailabilityResponse;
-import com.bootforge.inventory.dto.InventoryResponse;
-import com.bootforge.inventory.dto.UpdateInventoryRequest;
+import com.bootforge.inventory.dto.*;
 import com.bootforge.inventory.service.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +8,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -104,7 +100,7 @@ public class InventoryController {
 
     @GetMapping
     @Operation(summary = "Get all inventories")
-    public ResponseEntity<Page<InventoryResponse>> getAllInventories(
+    public ResponseEntity<PageResponse<InventoryResponse>> getAllInventories(
             @ParameterObject
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC)Pageable pageable){
         return ResponseEntity.ok(inventoryService.getAllInventories(pageable));

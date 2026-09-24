@@ -1,9 +1,6 @@
 package com.bootforge.inventory.service;
 
-import com.bootforge.inventory.dto.CreateInventoryRequest;
-import com.bootforge.inventory.dto.InventoryAvailabilityResponse;
-import com.bootforge.inventory.dto.InventoryResponse;
-import com.bootforge.inventory.dto.UpdateInventoryRequest;
+import com.bootforge.inventory.dto.*;
 import com.bootforge.inventory.entity.Inventory;
 import com.bootforge.inventory.exception.DuplicateInventoryException;
 import com.bootforge.inventory.exception.InsufficientInventoryException;
@@ -14,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -116,8 +115,17 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public Page<InventoryResponse> getAllInventories(Pageable pageable) {
-        return inventoryRepository.findAll(pageable).map(this::toInventoryResponse);
+    public PageResponse<InventoryResponse> getAllInventories(Pageable pageable) {
+        Page<Inventory> pageInventory = inventoryRepository.findAll(pageable);
+        List<InventoryResponse> inventories = pageInventory.getContent().stream()
+                .map(this::toInventoryResponse).toList();
+        return new PageResponse<>(
+                inventories,
+                pageInventory.getNumber(),
+                pageInventory.getSize(),
+                pageInventory.getTotalElements(),
+                pageInventory.getTotalPages()
+        );
     }
 
     private Inventory getInventoryByProduct(Long productId) {
