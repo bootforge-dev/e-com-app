@@ -3,13 +3,13 @@ server:
 spring:
   application:
     name: config-server
+  profiles:
+    active: native
   cloud:
     config:
       server:
-        git:
-          uri: https://github.com/bootforge-dev/config-repo
-          default-label: main
-          clone-on-start: true
+        native:
+          search-locations: classpath:/configurations
 management:
   endpoints:
     web:

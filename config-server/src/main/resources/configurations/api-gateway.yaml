@@ -1,0 +1,75 @@
+server:
+  port: 9100
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: product-service
+              uri: lb://product-service
+              predicates:
+                - Path=/api/v1/products/**
+
+            - id: inventory-service
+              uri: lb://inventory-service
+              predicates:
+                - Path=/api/v1/inventories/**
+
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                - Path=/api/v1/orders/**
+
+            - id: payment-service
+              uri: lb://payment-service
+              predicates:
+                - Path=/api/v1/payments/**
+
+            - id: product-service-openapi
+              uri: lb://product-service
+              predicates:
+                - Path=/product-service/v3/api-docs
+              filters:
+                - RewritePath=/product-service/v3/api-docs, /v3/api-docs
+
+            - id: inventory-service-openapi
+              uri: lb://inventory-service
+              predicates:
+                - Path=/inventory-service/v3/api-docs
+              filters:
+                - RewritePath=/inventory-service/v3/api-docs, /v3/api-docs
+
+            - id: order-service-openapi
+              uri: lb://order-service
+              predicates:
+                - Path=/order-service/v3/api-docs
+              filters:
+                - RewritePath=/order-service/v3/api-docs, /v3/api-docs
+
+            - id: payment-service-openapi
+              uri: lb://payment-service
+              predicates:
+                - Path=/payment-service/v3/api-docs
+              filters:
+                - RewritePath=/payment-service/v3/api-docs, /v3/api-docs
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: Product Service
+        url: /product-service/v3/api-docs
+
+      - name: Inventory Service
+        url: /inventory-service/v3/api-docs
+
+      - name: Order Service
+        url: /order-service/v3/api-docs
+
+      - name: Payment Service
+        url: /payment-service/v3/api-docs
